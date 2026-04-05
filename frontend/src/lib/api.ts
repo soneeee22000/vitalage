@@ -159,6 +159,23 @@ export interface HabitTemplate {
   description: string;
 }
 
+export interface MealAnalyzeRequest {
+  patient_id: string;
+  image_base64: string;
+  meal_type: string;
+}
+
+export interface MealResponse {
+  id: string;
+  patient_id: string;
+  photo_url: string;
+  analysis: Record<string, unknown>;
+  nutrition_score: number;
+  meal_type: string;
+  date: string;
+  created_at: string;
+}
+
 export interface VitalityScore {
   patient_id: string;
   nutrition: number;
@@ -239,6 +256,19 @@ export const api = {
 
     status(patientId: string): Promise<CheckInStatus> {
       return request(`/check-ins/patients/${patientId}/status`);
+    },
+  },
+
+  meals: {
+    analyze(data: MealAnalyzeRequest): Promise<MealResponse> {
+      return request("/meals/analyze", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+
+    history(patientId: string): Promise<MealResponse[]> {
+      return request(`/meals/patients/${patientId}`);
     },
   },
 

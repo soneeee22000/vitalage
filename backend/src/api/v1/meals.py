@@ -3,26 +3,54 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.agents.meal_analyzer import MealAnalyzer
+from src.config.settings import settings
 from src.db.engine import get_session
 from src.db.repositories.meal_repository import MealRepository
 from src.middleware.auth import get_current_patient_id, require_patient_match
 from src.models.schemas import MealAnalyzeRequest, MealResponse
+from src.services.meal_service import MealService
 
 router = APIRouter(prefix="/meals", tags=["meals"])
+
+
+def _get_meal_service(
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> MealService:
+    """Provide a MealService instance."""
+    analyzer = None
+    if settings.mistral_api_key:
+        analyzer = MealAnalyzer(settings.mistral_api_key, session)
+    return MealService(analyzer, session)
 
 
 @router.post("/analyze", status_code=201, response_model=MealResponse)
 async def analyze_meal(
     request: MealAnalyzeRequest,
-    session: AsyncSession = Depends(get_session),  # noqa: B008
+    service: MealService = Depends(_get_meal_service),  # noqa: B008
     current_patient_id: uuid.UUID | None = Depends(get_current_patient_id),  # noqa: B008
 ) -> MealResponse:
     """Analyze a meal photo with AI and return nutritional assessment."""
     require_patient_match(request.patient_id, current_patient_id)
 
-    raise HTTPException(
-        status_code=501,
-        detail="Analyse de repas en cours de developpement. Disponible bientot.",
+    try:
+        meal = await service.analyze_and_store(
+            patient_id=request.patient_id,
+            image_base64=request.image_base64,
+            meal_type=request.meal_type.value,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return MealResponse(
+        id=meal.id,
+        patient_id=meal.patient_id,
+        photo_url=meal.photo_url,
+        analysis=meal.analysis,
+        nutrition_score=meal.nutrition_score,
+        meal_type=meal.meal_type,
+        date=meal.date,
+        created_at=meal.created_at,
     )
 
 
