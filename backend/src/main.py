@@ -122,6 +122,18 @@ app.include_router(
     insights_router, prefix="/api/v1", dependencies=[Depends(verify_token)]
 )
 
+@app.post("/api/v1/admin/seed-demo")
+async def seed_demo_endpoint() -> dict[str, str]:
+    """One-time endpoint to seed Marie's demo data."""
+    from scripts.seed_demo import seed_demo
+
+    try:
+        await seed_demo()
+        return {"status": "seeded"}
+    except Exception as exc:
+        return {"status": "error", "detail": str(exc)}
+
+
 STATIC_DIR = Path(__file__).parent.parent / "static"
 
 if STATIC_DIR.exists():

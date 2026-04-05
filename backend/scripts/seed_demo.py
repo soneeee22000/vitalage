@@ -9,6 +9,7 @@ Usage: python -m scripts.seed_demo
 """
 
 import asyncio
+import os
 import random
 import uuid
 from datetime import date, datetime, timedelta, timezone
@@ -30,10 +31,8 @@ from src.db.tables import (
 from src.models.fhir_helpers import create_consent, create_patient
 from src.services.auth_service import pwd_context
 
-import os
-
 MARIE_EMAIL = "marie.dupont@demo.vitalage.health"
-MARIE_CRED = os.environ.get("DEMO_CRED", "")
+MARIE_CRED = os.environ.get("DEMO_CRED", "vitalage2026")
 
 MOODS = ["bien", "calme", "neutre", "fatigue", "stresse"]
 MOOD_WEIGHTS_EARLY = [0.15, 0.15, 0.30, 0.25, 0.15]
