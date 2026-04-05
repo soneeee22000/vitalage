@@ -32,11 +32,12 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_mistral_key(self) -> "Settings":
-        """Fail fast if Mistral API key is missing in production."""
+        """Warn if Mistral API key is missing in production."""
+        import logging
+
         if self.app_env == "production" and not self.mistral_api_key:
-            raise ValueError(
-                "MISTRAL_API_KEY is required in production. "
-                "Set it in your .env file."
+            logging.getLogger(__name__).warning(
+                "MISTRAL_API_KEY not set — AI features disabled"
             )
         return self
 
