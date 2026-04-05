@@ -33,7 +33,13 @@ limiter = Limiter(
 
 @asynccontextmanager
 async def lifespan(application: FastAPI) -> AsyncIterator[None]:
-    """Manage async engine lifecycle."""
+    """Create tables on startup and dispose engine on shutdown."""
+    from src.db import tables as _tables  # noqa: F401
+    from src.db.base import Base
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    logger.info("Database tables created/verified")
     yield
     await engine.dispose()
 
