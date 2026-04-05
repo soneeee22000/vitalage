@@ -1,302 +1,371 @@
-# VitalAge — Build Plan
+# VitalAge — Revised Build Plan (Post Stress-Test)
 
-## Deadline: April 27, 2026 (22 days remaining)
+## Deadline: April 27, 2026
 
-## Phase 1: Application (Apr 14-15)
+## Strategic Changes from Original Plan
+
+### What we cut (saves ~4 days)
+
+- Voice check-ins (Voxtral) — nice-to-have, not a differentiator
+- FHIR Consent UI — keep backend consent enforcement, cut the user-facing consent management screen
+- Notification/reminder system — tell users to set a phone alarm; build push notifications post-challenge
+- Customizable vitality weights — hardcode the weights, remove user control (it weakens score credibility)
+- Full onboarding flow with swipe screens — replace with a single welcome + first check-in
+- Audit event browsing UI — keep backend audit logging, cut the frontend viewer
+- Data export feature — post-challenge
+
+### What we add (wins the competition)
+
+- 5-day concierge pilot with real 45+ adults (before building anything)
+- Meal photo AI validation on 10 French meals (before committing to scope)
+- "Marie's 30-day journey" seeded demo narrative
+- French language throughout the demo
+- Bottoms-up market sizing slide
+- Health-outcome-first Nestle value framing
+
+### Feature Tiers
+
+| Tier                 | Features                                                                                | Demo State                                  |
+| -------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------- |
+| **T1: Must ship**    | Check-in + Vitality Score + Micro-Habits                                                | Fully functional, French UI                 |
+| **T2: Should ship**  | Meal photo analysis                                                                     | Works on 5-6 French meals                   |
+| **T3: Seeded demo**  | AI Insights/correlations                                                                | Marie's 30-day data, pre-generated insights |
+| **T4: Cut from MVP** | Voice input, consent UI, notifications, weight customization, data export, audit viewer | Mention on "roadmap" slide only             |
+
+---
+
+## Phase 0: Validate Before Building (Apr 5-10)
+
+### Track A: Concierge Pilot (Apr 5-10)
+
+Goal: Get one proof line for the application — "X of Y pilot users completed 5+ daily check-ins over 5 days"
+
+- [ ] Create Google Form with 4 check-in questions:
+  - Qualité du sommeil (1-5)
+  - Niveau d'énergie (1-5)
+  - Humeur (selection: Bien / Correct / Fatigué / Stressé / Autre)
+  - Symptômes ou remarques? (optional free text)
+- [ ] Recruit 5-8 adults aged 45+ (parents, neighbors, parents of friends, colleagues' parents)
+  - Target: people who care about health but don't use fitness apps
+  - Explain: "I'm testing a 60-second daily health check-in for a startup challenge — can you fill out a short form each morning for 5 days?"
+- [ ] Send daily WhatsApp/SMS reminder at their chosen morning time
+- [ ] Track completion in spreadsheet: who filled out, when, how long it took
+- [ ] Day 5: Manually analyze each person's data, write them a personal insight:
+  - "You had your best energy on days you reported sleeping 4-5/5"
+  - "Your mood was most stable mid-week — weekend routines might differ"
+- [ ] Day 6-7: Ask each participant 3 exit questions:
+  - Was the daily check-in easy to maintain? (1-5)
+  - Did the personal insight feel useful? (Y/N)
+  - Would you use an app that did this automatically? (Y/N)
+- [ ] Compile results into one application paragraph
+
+### Track B: Meal Photo AI Validation (Apr 5-8)
+
+Goal: Decide if meal photo analysis is T1 or T3
+
+- [ ] Photograph or source images of 10 common French meals:
+  1. Croque-monsieur
+  2. Salade niçoise
+  3. Ratatouille with bread
+  4. Tartine with cheese and greens
+  5. Pot-au-feu
+  6. Quiche lorraine
+  7. Steak-frites with salad
+  8. Soupe de légumes with bread
+  9. Omelette aux champignons
+  10. Plateau de fromages with fruit
+- [ ] Test Mistral vision API on each: "Analyze this meal's nutritional qualities. Focus on what's good (protein, fiber, vitamins, minerals, hydration) and one suggestion for improvement. Respond in French. Do not estimate calories."
+- [ ] Score results: Sensible and helpful? (Y/N for each)
+- [ ] Decision gate:
+  - 7+/10 sensible → Meal AI is T1, build it fully
+  - 4-6/10 sensible → Meal AI is T2, demo with curated examples only
+  - <4/10 sensible → Meal AI is T3, show as seeded data in Marie's story
+- [ ] If Mistral fails: test Foodvisor API free tier as fallback
+
+---
+
+## Phase 1: Application Submission (Apr 11-13)
 
 - [ ] Log into Agorize, extract Nestle Vital form fields
-- [ ] Draft application answers mapped to form
-- [ ] Record video demo if required
+- [ ] Rewrite APPLICATION-NESTLE.md with stress-test fixes:
+  - Lead with health outcomes, not commercial opportunity
+  - Include concierge pilot results
+  - Bottoms-up market sizing (14M × 40% smartphone × 5% conversion = 280K)
+  - Single business model: B2B2C via Nestle (others in appendix only)
+  - Reframe vitality score: "perceived vitality anchored to WHO-5 Well-Being Index"
+  - Add "Phase 2 with Nestle" slide: what we'd build with their resources
+  - French meal photo demo results (if meal AI validated)
+  - One-line pilot proof: "X of Y adults 50+ completed 5+ daily check-ins"
+- [ ] Draft application answers mapped to Agorize form
+- [ ] French-language pitch summary (even if form is English)
+- [ ] Record 2-min video walkthrough if required
 - [ ] Submit application
 
-## Phase 2: Backend MVP (Apr 16-19)
+---
 
-### Day 1: Project scaffold + check-in engine
+## Phase 2: Backend MVP (Apr 14-19) — 6 days
+
+### Day 1 (Apr 14): Project scaffold + Auth
 
 - [ ] Initialize FastAPI project from Entre Deux template
-- [ ] Database schema: users, check_ins, meals, habits, vitality_scores
-- [ ] FHIR R5 models: Observation (check-in data), QuestionnaireResponse (daily check-in)
-- [ ] `POST /api/v1/check-ins` — submit daily check-in (sleep, energy, mood, symptoms)
-- [ ] `GET /api/v1/check-ins/patients/{id}` — list check-in history
-- [ ] `CheckInAnalyzer` agent — structures free-text symptoms, detects patterns
-- [ ] Auth endpoints (register, login, refresh)
+- [ ] Database schema (PostgreSQL):
+  - users
+  - check_ins (sleep_quality, energy_level, mood, symptoms, created_at)
+  - meals (photo_url, analysis_json, nutrition_score, created_at)
+  - habits (template_id, user_id, started_at)
+  - habit_completions (habit_id, completed_at)
+  - vitality_scores (user_id, nutrition, sleep, activity, mood, overall, calculated_at)
+  - insights (user_id, insight_text, correlation_data, generated_at)
+- [ ] Auth endpoints: register, login, refresh (reuse from Entre Deux)
+- [ ] JWT middleware (reuse from Entre Deux)
+- [ ] Health check endpoint
 - [ ] Tests
 
-### Day 2: Meal analysis + nutrition scoring
+### Day 2 (Apr 15): Check-in engine
 
-- [ ] `MealAnalyzer` agent — Mistral vision analyzes meal photo for nutritional content
-  - Identifies foods in image
-  - Estimates nutritional profile (protein, fiber, vitamins, hydration)
-  - Returns nutritional quality score (not calories)
-  - Generates positive micro-tip ("great fiber, consider adding vitamin C source")
-- [ ] `POST /api/v1/meals/analyze` — photo upload -> AI meal analysis
-- [ ] `GET /api/v1/meals/patients/{id}` — meal history with nutrition profiles
-- [ ] Nutrition scoring algorithm (Mediterranean diet adherence, nutrient diversity)
+- [ ] `POST /api/v1/check-ins` — submit daily check-in
+  - sleep_quality (1-5), energy_level (1-5), mood (enum), symptoms (optional text)
+  - Validates one check-in per user per day
+- [ ] `GET /api/v1/check-ins/patients/{id}` — check-in history with pagination
+- [ ] CheckInAnalyzer agent — structures free-text symptoms into categories
+  - Reuse journal agent pattern from Entre Deux
+  - Uses `mistral_utils.safe_chat_complete`
+- [ ] Audit logging for AI calls (backend only, no UI)
 - [ ] Tests
 
-### Day 3: Vitality score engine
+### Day 3 (Apr 16): Meal analysis (if validated in Phase 0)
 
-- [ ] `VitalityScorer` service — composite algorithm:
-  - Nutrition dimension (0-100): based on meal quality, nutrient diversity, consistency
-  - Sleep dimension (0-100): based on reported sleep quality and duration
-  - Activity dimension (0-100): based on reported activity (steps if available, self-report otherwise)
-  - Mood dimension (0-100): based on mood check-ins, symptom frequency
-  - Overall Vitality: weighted composite (configurable weights)
-- [ ] `GET /api/v1/vitality/patients/{id}` — current vitality score + history
-- [ ] `GET /api/v1/vitality/patients/{id}/trends` — weekly/monthly vitality trends
-- [ ] Score recalculation on new check-in/meal data
+If meal AI scored 7+/10:
+
+- [ ] `POST /api/v1/meals/analyze` — photo upload + Mistral vision analysis
+  - Returns: identified foods, nutritional highlights, quality score (0-100), micro-tip
+  - Positive framing only, French language output
+  - No calorie estimation — qualitative nutritional assessment
+- [ ] `GET /api/v1/meals/patients/{id}` — meal history
+- [ ] MealAnalyzer agent with structured output parsing
 - [ ] Tests
 
-### Day 4: Micro-habit system + insights engine
+If meal AI scored <7/10:
 
-- [ ] Habit template library (20+ evidence-based micro-habits):
-  - Sleep: "Sleep before 11pm", "No screens 30 min before bed"
-  - Nutrition: "Eat 1 fruit before noon", "Drink water with every meal"
-  - Activity: "Walk 10 min after lunch", "Stretch for 5 min in morning"
-  - Mood: "Write 1 thing you're grateful for", "Call a friend this week"
-- [ ] `POST /api/v1/habits/activate` — start a new habit
-- [ ] `POST /api/v1/habits/{id}/complete` — mark habit done today
-- [ ] `GET /api/v1/habits/patients/{id}` — active habits with streaks
-- [ ] Habit recommendation agent — selects habits based on weakest vitality dimension
-- [ ] `InsightEngine` agent — detects correlations after 2+ weeks of data:
+- [ ] Simplified meal endpoint that accepts manual meal description
+- [ ] Pre-built responses for common French meal categories
+- [ ] Focus remaining time on vitality score polish
+
+### Day 4 (Apr 17): Vitality Score engine
+
+- [ ] VitalityScorer service — composite algorithm:
+  ```
+  nutrition (30%): meal quality avg (7d) × 0.5 + meal consistency (7d) × 0.5
+  sleep (25%): sleep quality avg (7d) × 0.7 + sleep consistency (7d) × 0.3
+  activity (25%): habit completion rate (7d) × 0.6 + self-report (7d) × 0.4
+  mood (20%): mood avg (7d) × 0.6 + mood stability (7d) × 0.2 + symptom frequency (7d) × 0.2
+  overall = weighted sum (hardcoded weights, no user customization)
+  ```
+- [ ] `GET /api/v1/vitality/patients/{id}` — current score + dimension breakdown
+- [ ] `GET /api/v1/vitality/patients/{id}/trends` — 7-day rolling scores
+- [ ] Score auto-recalculation on new check-in or meal data
+- [ ] Tests
+
+### Day 5 (Apr 18): Micro-habit system
+
+- [ ] Habit template library (12 evidence-based micro-habits, not 20):
+  - Sleep (3): Sleep before 23h, No screens 30 min before bed, Wake at same time
+  - Nutrition (3): 1 fruit before noon, Water with every meal, 1 vegetable serving at lunch
+  - Activity (3): Walk 10 min after lunch, Stretch 5 min in morning, 5000 steps today
+  - Mood (3): 1 gratitude note, 10 min outside in daylight, Call a friend this week
+- [ ] `POST /api/v1/habits/activate` — start a habit (max 3 active)
+- [ ] `POST /api/v1/habits/{id}/complete` — mark done today
+- [ ] `GET /api/v1/habits/patients/{id}` — active habits with streak counts
+- [ ] HabitRecommender agent — suggests habits targeting weakest vitality dimension
+- [ ] Tests
+
+### Day 6 (Apr 19): Insights engine + demo data seeder
+
+- [ ] InsightEngine agent — detects correlations from 2+ weeks of data:
   - Sleep duration vs next-day energy
-  - Meal nutrition vs afternoon mood
-  - Activity vs sleep quality
-  - Generates natural-language insights in French
-- [ ] `GET /api/v1/insights/patients/{id}` — personalized AI insights
-- [ ] Audit logging for all AI operations
+  - Meal quality vs afternoon mood
+  - Habit completion vs dimension scores
+  - Outputs natural-language insight in French
+- [ ] `GET /api/v1/insights/patients/{id}` — personalized insights
+- [ ] **Demo data seeder script** — creates "Marie, 58, Lyon" account with:
+  - 30 days of check-in data showing progression
+  - Vitality score climbing from 52 to 76
+  - 3 active habits with realistic streaks (some missed days)
+  - 5 pre-generated insights with real correlations
+  - 15 meal analyses (if meal AI is T1)
 - [ ] Integration tests for full pipeline
+- [ ] Backend API documentation
 
-## Phase 3: Frontend MVP (Apr 20-24)
+---
 
-### Day 5: Check-in + Meal screens
+## Phase 3: Frontend MVP (Apr 20-24) — 5 days
 
-- [ ] Project scaffold: React 19 + TypeScript + Tailwind + shadcn + PWA
-- [ ] Design system: warm, inviting, accessible (larger text for 45-70 demographic)
-- [ ] **Check-in screen** — morning ritual:
-  - Sleep quality (1-5 tap buttons, large touch targets)
-  - Energy level (1-5 tap buttons)
-  - Mood (icon selection, not text)
-  - Optional: symptoms/notes (free text or voice)
-  - Submit animation with celebration (BJ Fogg: celebrate completion)
-  - Total interaction time: <60 seconds
-- [ ] **Meal screen** — meal photo capture
-  - Camera capture with food framing guide
-  - AI analysis result: nutritional highlights (positive framing)
-  - Micro-tip display
-  - Meal history gallery
+### Day 7 (Apr 20): Scaffold + Design System + Check-in
 
-### Day 6: Vitality Score + Habits screens
+- [ ] React 19 + TypeScript + Tailwind + shadcn + PWA (vite-plugin-pwa)
+- [ ] Design system setup:
+  - Warm earth tones + vitality green (from CLAUDE.md design system)
+  - Lora (headings) + Inter (body) via next/font/google equivalent
+  - 18px minimum body font, 44px minimum touch targets
+  - All text in French
+- [ ] **Check-in screen** (the hero screen — must be perfect):
+  - "Bonjour Marie" greeting with date
+  - Sleep quality: 5 large tap buttons (1-5) with sleep icons
+  - Energy level: 5 large tap buttons with energy icons
+  - Mood: 5 icon selections (Bien, Content, Neutre, Fatigué, Stressé)
+  - Optional symptoms text field
+  - Submit with celebration animation
+  - "Votre série: 12 jours" streak counter
+  - Total interaction: under 60 seconds
 
-- [ ] **Vitality Score screen** — the centerpiece
-  - Large circular score display (0-100) with color gradient
-  - 4 dimension breakdown (nutrition, sleep, activity, mood)
-  - Weekly trend sparkline
-  - "Up 3 from last week" change indicator
-  - Tap dimension for detail drill-down
-- [ ] **Habits screen** — Duolingo-style
-  - 3 active habits with streak flames
-  - Tap to complete today
-  - Progress ring for each habit
-  - "Unlock new habit" teaser when all 3 have 7+ day streaks
+### Day 8 (Apr 21): Vitality Score + Meal screens
 
-### Day 7: Insights + Profile screens
+- [ ] **Vitality Score screen** (the centerpiece):
+  - Large circular score (0-100) with animated fill
+  - 4 dimension bars: Nutrition (green), Sommeil (blue), Activité (orange), Humeur (purple)
+  - "+3 depuis la semaine dernière" change indicator
+  - 7-day trend sparkline
+  - All labels in French
+- [ ] **Meal screen** (if meal AI is T1/T2):
+  - Camera capture button
+  - AI analysis result card: nutritional highlights + micro-tip
+  - Meal history gallery with nutrition scores
+  - If T2: works but only demoed with pre-tested French meals
 
-- [ ] **Insights screen** — AI-generated personal correlations
+### Day 9 (Apr 22): Habits + Insights screens
+
+- [ ] **Habits screen** (Duolingo-style):
+  - 3 active habit cards with streak flame icons (Lucide, not emoji)
+  - Tap to complete today — satisfying checkmark animation
+  - Progress ring showing streak length
+  - "Recommandé pour vous" suggestion from AI when slot opens
+- [ ] **Insights screen**:
   - Card-based layout, one insight per card
-  - "When you sleep >7h, your energy next day is 40% higher"
-  - Visual correlation charts (simple bar/line)
-  - Locked state for first 2 weeks ("keep checking in to unlock insights")
-- [ ] **Profile/Settings screen**
-  - Personal info
-  - Check-in reminder time setting
-  - Vitality dimension weight customization (autonomy)
-  - Data export
-- [ ] Bottom navigation (Check-in, Meals, Vitality, Habits, Insights)
+  - Simple bar chart showing correlation visually
+  - Locked state for new users: "Continuez vos bilans pour débloquer vos insights personnels"
+  - For demo: Marie's 5 insights with visualizations
 
-### Day 8-9: Polish + onboarding
+### Day 10 (Apr 23): Navigation + Auth + Polish
 
-- [ ] Onboarding flow:
-  - Welcome + value proposition (3 swipe screens)
-  - Implementation intention: "When will you check in?" (time picker)
-  - Consent capture (FHIR Consent)
-  - First check-in immediately after onboarding
-- [ ] Error boundaries, loading states, offline banner
-- [ ] Mobile responsiveness pass (primary device = phone)
-- [ ] Accessibility pass (font sizes, contrast, touch targets for 45-70 demographic)
-- [ ] Notification/reminder system for daily check-in
-- [ ] Animation polish (score changes, streak celebrations)
+- [ ] Bottom navigation: Bilan | Repas | Vitalité | Habitudes | Insights
+- [ ] Login / Register screens (minimal, functional)
+- [ ] Simple welcome screen (single page, no multi-swipe onboarding):
+  - "60 secondes par jour pour comprendre votre vitalité"
+  - "Commencer" button -> register -> first check-in
+- [ ] Error boundaries + loading states
+- [ ] Mobile responsiveness pass (phone is primary device)
+- [ ] Accessibility pass: contrast ratios 4.5:1+, all interactive elements have aria labels
 
-## Phase 4: Deploy + Demo (Apr 24-26)
+### Day 11 (Apr 24): Demo flow + Animation polish
 
-- [ ] Docker compose (backend + frontend + postgres)
+- [ ] "Marie's Journey" demo walkthrough:
+  - Login as Marie -> see her 30-day vitality trajectory
+  - Show score progression 52 → 76
+  - Show her 3 habits with streaks
+  - Show her 5 personal insights
+  - Show a meal analysis (if T1/T2)
+  - Do a live check-in as Marie
+- [ ] Animation polish:
+  - Score circle fill animation on load
+  - Streak flame flicker
+  - Check-in submit celebration
+  - Dimension bar animations
+- [ ] PWA install prompt + offline banner
+- [ ] Test full demo flow 3 times end-to-end
+
+---
+
+## Phase 4: Deploy + Demo Prep (Apr 25-26) — 2 days
+
+### Day 12 (Apr 25): Deploy
+
+- [ ] Docker compose: backend + frontend + PostgreSQL
 - [ ] Deploy to Google Cloud Run
-- [ ] Seed demo account with 30 days of simulated check-in data
-  - Show score progression from 55 to 78
-  - Show insight unlocking
-  - Show habit streaks
-- [ ] Demo walkthrough script
-- [ ] Screenshots/video for application
-- [ ] Final polish pass
+- [ ] Run demo data seeder on production
+- [ ] Verify full demo flow on production URL
+- [ ] Test on actual phone (not just browser dev tools)
+- [ ] Test on a second phone (borrow one — different screen size)
+
+### Day 13 (Apr 26): Demo materials
+
+- [ ] 2-minute demo video:
+  - "Meet Marie, 58, retired teacher in Lyon"
+  - Show her morning check-in (60 seconds)
+  - Show her vitality score climbing over 30 days
+  - Show her personal insights
+  - Show a meal photo analysis (if T1)
+  - End with: "Built in 22 days by one engineer. Imagine what Nestle Vital could do with this."
+- [ ] Screenshots for application (phone-frame mockups)
+- [ ] Demo script for live walkthrough (if needed at finalist stage)
+- [ ] Final application review — all fields complete, all links working
+
+---
 
 ## Phase 5: Submit (Apr 27)
 
-- [ ] Final application review
-- [ ] Submit on Agorize before deadline
-- [ ] Celebrate (again)
+- [ ] Final read-through of application
+- [ ] Verify production URL is live and demo account works
+- [ ] Submit on Agorize
+- [ ] Backup: export all application answers locally
 
-## Architecture
+---
+
+## Architecture (Simplified)
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                    FRONTEND (PWA)                     │
-│  React 19 + TypeScript + Tailwind + shadcn           │
-│                                                       │
-│  Screens: Check-in | Meals | Vitality | Habits | Insights │
-│  Auth: JWT tokens                                    │
-│  State: useAsyncData hook                            │
-│  Accessibility: 44px touch targets, 18px min font    │
-└────────────────────┬────────────────────────────────┘
-                     │ HTTPS
-┌────────────────────▼────────────────────────────────┐
-│                    BACKEND (FastAPI)                  │
-│                                                       │
-│  api/v1/                                             │
-│    ├── auth.py          (register, login, refresh)    │
-│    ├── check_ins.py     (submit, list)               │
-│    ├── meals.py         (analyze photo, list)        │
-│    ├── vitality.py      (score, trends)              │
-│    ├── habits.py        (activate, complete, list)   │
-│    ├── insights.py      (personal correlations)      │
-│    └── consents.py      (FHIR consent management)    │
-│                                                       │
-│  agents/                                             │
-│    ├── check_in_analyzer.py   (symptom structuring)  │
-│    ├── meal_analyzer.py       (Mistral vision)       │
-│    ├── insight_engine.py      (correlation detection) │
-│    └── habit_recommender.py   (personalized selection)│
-│                                                       │
-│  services/                                           │
-│    ├── check_in_service.py    (daily check-in logic) │
-│    ├── meal_service.py        (meal analysis pipeline)│
-│    ├── vitality_service.py    (score calculation)    │
-│    ├── habit_service.py       (streak management)    │
-│    ├── insight_service.py     (correlation analysis) │
-│    └── audit_service.py       (FHIR AuditEvent)     │
-│                                                       │
-│  db/                                                 │
-│    ├── models.py              (SQLAlchemy)            │
-│    └── repositories/          (data access)          │
-│                                                       │
-│  middleware/                                         │
-│    ├── auth.py                (JWT validation)       │
-│    └── consent.py             (FHIR consent check)   │
-└────────────────────┬────────────────────────────────┘
-                     │
-┌────────────────────▼────────────────────────────────┐
-│               PostgreSQL 16                          │
-│  FHIR R5 JSONB: Observation, QuestionnaireResponse,  │
-│  Consent, AuditEvent                                 │
-│  + users, check_ins, meals, habits, habit_completions,│
-│    vitality_scores, insights                         │
-└─────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────┐
+│              FRONTEND (PWA)                     │
+│  React 19 + TypeScript + Tailwind + shadcn     │
+│                                                 │
+│  Screens: Bilan | Repas | Vitalité |           │
+│           Habitudes | Insights                  │
+│  Auth: JWT          State: useAsyncData        │
+│  Language: French   Font: 18px+ body           │
+└──────────────────┬────────────────────────────┘
+                   │ HTTPS
+┌──────────────────▼────────────────────────────┐
+│              BACKEND (FastAPI)                  │
+│                                                 │
+│  api/v1/                                       │
+│    auth.py, check_ins.py, meals.py,            │
+│    vitality.py, habits.py, insights.py         │
+│                                                 │
+│  agents/                                       │
+│    check_in_analyzer.py, meal_analyzer.py,     │
+│    insight_engine.py, habit_recommender.py     │
+│                                                 │
+│  services/                                     │
+│    vitality_service.py, habit_service.py,      │
+│    insight_service.py, audit_service.py        │
+│                                                 │
+│  db/ models.py + repositories/                 │
+└──────────────────┬────────────────────────────┘
+                   │
+┌──────────────────▼────────────────────────────┐
+│            PostgreSQL 16                       │
+│  users, check_ins, meals, habits,              │
+│  habit_completions, vitality_scores, insights  │
+└───────────────────────────────────────────────┘
 ```
 
-## Vitality Score Algorithm
+## Risk Register (Revised)
 
-```python
-# Dimension scores (each 0-100)
+| Risk                                    | Likelihood | Impact | Mitigation                                                                                                                                                 |
+| --------------------------------------- | ---------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Meal photo AI inaccurate on French food | Medium     | High   | Phase 0 validation gate; fallback to curated demos                                                                                                         |
+| No pilot participants found in time     | Low        | High   | Ask parents, neighbors, friends' parents; even 3 people is enough                                                                                          |
+| Backend takes longer than 6 days        | Medium     | Medium | Reusing 80%+ from Entre Deux; habits + insights are the only net-new services                                                                              |
+| Frontend polish insufficient            | Medium     | Medium | Focus on 3 screens (check-in, vitality, habits); insights can be simpler                                                                                   |
+| Demo data doesn't tell compelling story | Low        | High   | Write Marie's narrative FIRST, then generate data to match                                                                                                 |
+| Judge asks about clinical validation    | High       | Medium | "Perceived vitality is anchored to WHO-5 Well-Being Index — a validated self-report instrument. We measure what predicts behavior change, not biomarkers." |
+| "Why should we trust a solo founder?"   | High       | Medium | "One engineer, 207 tests, production-deployed predecessor. I know what I need next: a nutritionist and a UX researcher for the 50+ demographic."           |
 
-nutrition_score = weighted_average(
-    meal_quality_avg_7d,        # Average nutritional quality of meals (0-100)
-    nutrient_diversity_7d,      # How many nutrient groups covered (0-100)
-    meal_consistency_7d,        # Regular meals vs skipping (0-100)
-)
+## What Winning Looks Like
 
-sleep_score = weighted_average(
-    sleep_quality_avg_7d,       # Self-reported 1-5 scaled to 0-100
-    sleep_consistency_7d,       # Variance in sleep quality (lower = better)
-)
+The judges should walk away thinking:
 
-activity_score = weighted_average(
-    activity_self_report_7d,    # Self-reported activity level
-    habit_completion_rate_7d,   # Activity-related habit streaks
-)
-
-mood_score = weighted_average(
-    mood_avg_7d,                # Self-reported mood scaled to 0-100
-    mood_stability_7d,          # Variance (lower = better)
-    symptom_frequency_7d,       # Fewer symptoms = higher score
-)
-
-# Overall vitality (default weights, user-customizable)
-vitality = (
-    nutrition_score * 0.30 +
-    sleep_score * 0.25 +
-    activity_score * 0.25 +
-    mood_score * 0.20
-)
-```
-
-## What We Reuse from Entre Deux
-
-| Component                     | Reuse Level | Notes                                                    |
-| ----------------------------- | ----------- | -------------------------------------------------------- |
-| FastAPI project structure     | 90%         | Same clean architecture                                  |
-| Mistral utils                 | 100%        | safe_chat_complete, safe_json_parse                      |
-| Journal agent patterns        | 70%         | Check-in analyzer similar to journal structuring         |
-| Auth system (JWT)             | 100%        | Same middleware                                          |
-| FHIR data model patterns      | 60%         | Observations for check-ins, new models for habits/scores |
-| Audit logging                 | 100%        | Same FHIR AuditEvent pattern                             |
-| Consent middleware            | 100%        | Same consent-first architecture                          |
-| React + Tailwind + shadcn     | 90%         | Adapt design system for older demographic                |
-| PWA configuration             | 100%        | Same vite-plugin-pwa                                     |
-| Docker + Cloud Run            | 100%        | Same deployment                                          |
-| useAsyncData hook             | 100%        | Same data fetching                                       |
-| Error boundaries              | 100%        | Same crash resilience                                    |
-| Voice transcription (Voxtral) | 80%         | For voice check-ins                                      |
-
-## Micro-Habit Library (Initial 20)
-
-### Sleep (5)
-
-1. Sleep before 11pm
-2. No screens 30 min before bed
-3. Wake up at the same time daily
-4. No caffeine after 2pm
-5. Read for 10 min before sleep
-
-### Nutrition (5)
-
-1. Eat 1 fruit before noon
-2. Drink a glass of water with every meal
-3. Eat 1 serving of vegetables at lunch
-4. Replace 1 processed snack with nuts
-5. Eat breakfast within 1 hour of waking
-
-### Activity (5)
-
-1. Walk 10 min after lunch
-2. Stretch for 5 min in morning
-3. Take the stairs instead of elevator
-4. Stand up every hour for 2 min
-5. Walk 5000 steps today
-
-### Mood/Wellbeing (5)
-
-1. Write 1 thing you're grateful for
-2. Call or message a friend
-3. Spend 10 min outside in daylight
-4. Take 5 deep breaths when stressed
-5. Do one thing just for yourself today
-
-## Risk Mitigation
-
-| Risk                          | Mitigation                                                             |
-| ----------------------------- | ---------------------------------------------------------------------- |
-| Meal photo AI accuracy        | Start with quality scoring, not calorie counting (more forgiving)      |
-| User fatigue at week 2-3      | Progressive complexity + insight rewards unlock at exactly this window |
-| Competitive Foodvisor (Paris) | We're a companion, not a food database. Different product category     |
-| "Just another wellness app"   | Vitality Score + personal correlations = unique differentiator         |
-| Older demographic adoption    | Accessible-first UX, voice input option, larger touch targets          |
-| 22-day timeline               | More time than VitaLens, reuse 80%+ from Entre Deux                    |
+1. **"This person understands behavior change."** — The science is real, not buzzwords.
+2. **"This could actually work for our customers."** — Marie's story makes it tangible.
+3. **"This is already built."** — Live demo, not mockups.
+4. **"Nestle Vital's name belongs on this."** — The B2B2C model is obvious.
+5. **"One person built this? Imagine a team."** — Execution credibility.
