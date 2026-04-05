@@ -19,7 +19,7 @@ from src.api.v1.insights import router as insights_router
 from src.api.v1.meals import router as meals_router
 from src.api.v1.vitality import router as vitality_router
 from src.config.settings import settings
-from src.db.engine import async_session_factory, engine
+from src.db.engine import engine
 from src.middleware.auth import verify_token
 from src.middleware.rate_limit import get_rate_limit_key
 
@@ -121,92 +121,6 @@ app.include_router(
 app.include_router(
     insights_router, prefix="/api/v1", dependencies=[Depends(verify_token)]
 )
-
-@app.post("/api/v1/admin/seed-demo")
-async def seed_demo_endpoint(
-    force: bool = False,
-) -> dict[str, str]:
-    """One-time endpoint to seed Marie's demo data."""
-    from scripts.seed_demo import MARIE_EMAIL, seed_demo
-
-    try:
-        if force:
-            from sqlalchemy import delete, select
-
-            from src.db.tables import UserTable
-
-            async with async_session_factory() as session:
-                stmt = select(UserTable).where(
-                    UserTable.email == MARIE_EMAIL
-                )
-                result = await session.execute(stmt)
-                user = result.scalar_one_or_none()
-                if user:
-                    from src.db.tables import (
-                        CheckInTable,
-                        HabitCompletionTable,
-                        HabitTable,
-                        InsightTable,
-                        MealTable,
-                        VitalityScoreTable,
-                    )
-
-                    pid = user.patient_id
-                    for tbl in [
-                        InsightTable,
-                        VitalityScoreTable,
-                        MealTable,
-                        CheckInTable,
-                    ]:
-                        await session.execute(
-                            delete(tbl).where(
-                                tbl.patient_id == pid
-                            )
-                        )
-                    habits = await session.execute(
-                        select(HabitTable).where(
-                            HabitTable.patient_id == pid
-                        )
-                    )
-                    for h in habits.scalars().all():
-                        await session.execute(
-                            delete(HabitCompletionTable).where(
-                                HabitCompletionTable.habit_id == h.id
-                            )
-                        )
-                    await session.execute(
-                        delete(HabitTable).where(
-                            HabitTable.patient_id == pid
-                        )
-                    )
-                    from src.db.tables import (
-                        ConsentTable,
-                        PatientTable,
-                    )
-
-                    await session.execute(
-                        delete(UserTable).where(
-                            UserTable.id == user.id
-                        )
-                    )
-                    await session.execute(
-                        delete(ConsentTable).where(
-                            ConsentTable.patient_id == pid
-                        )
-                    )
-                    await session.execute(
-                        delete(PatientTable).where(
-                            PatientTable.id == pid
-                        )
-                    )
-                    await session.commit()
-
-        await seed_demo()
-        return {"status": "seeded"}
-    except Exception as exc:
-        logger.exception("Seed demo failed")
-        return {"status": "error", "detail": str(exc)}
-
 
 STATIC_DIR = Path(__file__).parent.parent / "static"
 
