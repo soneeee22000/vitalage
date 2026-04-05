@@ -179,13 +179,22 @@ Industry average retention at day 30: 6%. Our target: 25%+ via friction reductio
 - Silver economy is a French national strategic priority
 - Corporate wellness budgets growing 20%+ annually in France
 
+## Current Status (Built & Deployed)
+
+- **Live MVP:** [vitalage-102991984200.europe-west1.run.app](https://vitalage-102991984200.europe-west1.run.app)
+- **64 automated tests** (34 backend + 30 frontend), all passing
+- **15 API endpoints** with JWT auth, patient isolation, rate limiting
+- **5 AI agents** powered by Mistral (check-in analysis, meal photos, insights, habit recommendation, vitality scoring)
+- **12 micro-habit templates** in French across 4 vitality dimensions
+- **Demo data seeder** — "Marie, 58, Lyon" with 30 days of data showing vitality 52 -> 76
+
 ## Tech Stack
 
-- **Backend:** Python 3.12, FastAPI, SQLAlchemy async, Alembic
-- **Frontend:** React 19, TypeScript strict, Tailwind CSS, shadcn/ui, PWA
-- **Database:** PostgreSQL 16 (FHIR R5 JSONB)
-- **AI:** Mistral Small (check-in analysis, meal interpretation, insight generation), Mistral OCR (meal photo analysis), Voxtral (voice check-ins)
-- **Scoring:** Custom vitality algorithm (weighted composite of nutrition, sleep, activity, mood)
-- **Gamification:** Streak engine, habit progression system, achievement unlocks
-- **Deployment:** Docker, Google Cloud Run
-- **Testing:** pytest, vitest, Playwright
+- **Backend:** Python 3.12, FastAPI, SQLAlchemy async
+- **Frontend:** React 19, TypeScript strict, Tailwind CSS, PWA
+- **Database:** PostgreSQL 16 (Cloud SQL)
+- **AI:** Mistral Small (analysis + insights) + Mistral Vision (meal photos)
+- **Scoring:** Custom 4-dimension vitality algorithm (nutrition 30%, sleep 25%, activity 25%, mood 20%)
+- **Deployment:** Docker, Google Cloud Run (europe-west1)
+- **Testing:** pytest + vitest (64 tests total)
+- **CI/CD:** GitHub Actions

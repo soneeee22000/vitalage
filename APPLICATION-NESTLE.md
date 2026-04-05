@@ -128,7 +128,7 @@ Month 3:    First Vitality Report.
             Shareable with doctor or family. Investment lock-in.
 ```
 
-Industry day-30 retention: 6%. Our target: 25%+ through science-backed friction reduction.
+Industry day-30 retention: 6%. We're designing for 2-3x industry average through these five frameworks working together.
 
 ## Technical Innovation
 
@@ -139,12 +139,11 @@ Industry day-30 retention: 6%. Our target: 25%+ through science-backed friction 
 
 ## Value to Nestle Vital
 
-1. **Nutritional gap detection** — "Your diet is low in fiber/calcium/vitamin D" = natural product recommendation opportunity for Nestle's nutrition brands
-2. **Supplement efficacy proof** — "Track your vitality while taking Vital Proteins" = real-world evidence that supplements improve outcomes
-3. **Behavior change data** — Which micro-habits actually stick? At what age? In what context? Invaluable for product development and marketing
-4. **Daily brand touchpoint** — High DAU app = daily engagement with Nestle wellness positioning
-5. **Smart Aging leadership** — Nestle Vital becomes synonymous with "aging well through data"
-6. **Ecosystem hub** — VitalAge connects Nestle's nutrition products to measurable consumer health outcomes
+1. **Measurable behavior change** — We help adults 50+ improve protein, fiber, hydration, and routine adherence through a 60-second daily loop. We can measure whether it actually works.
+2. **Nutritional intervention efficacy** — "Track your vitality while improving your nutrition" = real-world evidence that dietary changes improve perceived vitality scores over time.
+3. **Behavior change intelligence** — Which micro-habits actually stick? At what age? In what context? Invaluable for product development and consumer insight.
+4. **Nutritional gap detection** — "Your diet is low in fiber/calcium/vitamin D" = natural opportunity to recommend Nestle's wellness products as a measured intervention.
+5. **Smart Aging leadership** — Nestle Vital becomes synonymous with "aging well through data" — a daily companion, not a product ad.
 
 ## Competitive Advantage
 
@@ -188,21 +187,33 @@ Whoop and Oura require $200-300 hardware. Noom focuses on weight loss. Fabulous 
 
 ## Traction
 
-- **Proven tech foundation:** Built on Entre Deux, a production-deployed FHIR-native health AI platform
-- **207 automated tests:** Backend (pytest) + Frontend (vitest) + E2E (Playwright)
-- **Live predecessor:** entre-deux-web-102991984200.europe-west1.run.app
-- **CI/CD pipeline:** GitHub Actions with full quality gates
-- **Production infrastructure:** Docker + Google Cloud Run, ready for scale
+- **Live MVP deployed:** [vitalage-102991984200.europe-west1.run.app](https://vitalage-102991984200.europe-west1.run.app) — fully functional, register and try it now
+- **64 automated tests:** 34 backend (pytest) + 30 frontend (vitest), all passing
+- **5 AI agents:** Check-in analyzer, meal photo analyzer, insight engine, habit recommender, vitality scorer
+- **15 API endpoints:** Full REST API with JWT auth, patient isolation, rate limiting, audit logging
+- **Built in 2 weeks** by a solo engineer — from stress-test to production deployment
+- **Proven foundation:** Adapted from Entre Deux, a production FHIR-native health AI platform with 207 tests
+- **CI/CD pipeline:** GitHub Actions (ruff + mypy + pytest + ESLint + vitest + build)
+- **Production infrastructure:** Docker + Google Cloud Run (europe-west1), auto-scaling
 
 ## What We Want from Nestle Vital
 
-1. **Nutrition science partnership** — Access Nestle's nutritional research for evidence-based meal scoring algorithms
-2. **Consumer testing** — Pilot VitalAge with Nestle's consumer panels in the 45-70 demographic
-3. **Brand integration** — Map nutritional gaps to specific Nestle wellness products
+1. **Nutrition science partnership** — Access Nestle's nutritional research to improve our meal scoring algorithms with clinical evidence
+2. **Consumer testing** — Pilot VitalAge with Nestle's consumer panels in the 45-70 demographic to validate retention and behavior change
+3. **Brand integration** — Map detected nutritional gaps to specific Nestle wellness products, creating a measurable product-to-outcome pipeline
 4. **Distribution** — Nestle's consumer channels to reach the smart aging demographic at scale
+
+## Phase 2 with Nestle (Post-Challenge Roadmap)
+
+| Timeline  | Milestone              | Deliverable                                                        |
+| --------- | ---------------------- | ------------------------------------------------------------------ |
+| Month 1-2 | Consumer pilot         | 50-100 users aged 50-70, 30-day retention study                    |
+| Month 3   | Nestle product mapping | Nutritional gap -> product recommendation engine                   |
+| Month 4-5 | Efficacy measurement   | "Track your vitality while taking [product]" = real-world evidence |
+| Month 6   | White-label launch     | "Nestle Vital Companion" branded version                           |
 
 ## Demo
 
-- **Live predecessor:** https://entre-deux-web-102991984200.europe-west1.run.app
-- **GitHub:** https://github.com/soneeee22000/entre-deux
-- **VitalAge MVP:** Will be deployed before submission deadline
+- **Live MVP:** [https://vitalage-102991984200.europe-west1.run.app](https://vitalage-102991984200.europe-west1.run.app)
+- **GitHub:** [https://github.com/soneeee22000/vitalage](https://github.com/soneeee22000/vitalage)
+- **API Docs:** [https://vitalage-102991984200.europe-west1.run.app/docs](https://vitalage-102991984200.europe-west1.run.app/docs)
