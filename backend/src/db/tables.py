@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Boolean, Date, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -81,7 +81,9 @@ class HabitTable(Base):
     template_id: Mapped[str] = mapped_column(String(50), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     dimension: Mapped[str] = mapped_column(String(20), nullable=False)
-    started_at: Mapped[datetime] = mapped_column(nullable=False)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     __table_args__ = (
@@ -122,7 +124,9 @@ class VitalityScoreTable(Base):
     activity: Mapped[int] = mapped_column(Integer, nullable=False)
     mood: Mapped[int] = mapped_column(Integer, nullable=False)
     overall: Mapped[int] = mapped_column(Integer, nullable=False)
-    calculated_at: Mapped[datetime] = mapped_column(nullable=False)
+    calculated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
 
     __table_args__ = (
         Index("ix_vitality_scores_patient", "patient_id", "calculated_at"),
@@ -140,7 +144,9 @@ class InsightTable(Base):
     insight_text: Mapped[str] = mapped_column(Text, nullable=False)
     insight_type: Mapped[str] = mapped_column(String(50), nullable=False)
     correlation_data: Mapped[dict] = mapped_column(JSONB, nullable=False)  # type: ignore[type-arg]
-    generated_at: Mapped[datetime] = mapped_column(nullable=False)
+    generated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
 
     __table_args__ = (
         Index("ix_insights_patient", "patient_id"),
