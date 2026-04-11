@@ -16,7 +16,7 @@ export function AppShell() {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/connexion" replace />;
+    return <Navigate to="/bienvenue" replace />;
   }
 
   return (
