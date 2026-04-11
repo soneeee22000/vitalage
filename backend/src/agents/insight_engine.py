@@ -5,7 +5,11 @@ from mistralai import Mistral
 from mistralai.models import ResponseFormat
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.agents.mistral_utils import safe_chat_complete, safe_json_parse
+from src.agents.mistral_utils import (
+    AgentError,
+    safe_chat_complete,
+    safe_json_parse,
+)
 from src.services.audit_service import AuditService
 
 AGENT_NAME = "insight_engine"
@@ -58,6 +62,21 @@ class InsightEngine:
         self, patient_data_summary: str, patient_ref: str
     ) -> list[dict[str, Any]]:
         """Generate personal health insights from patient data."""
+        try:
+            return await self._generate_with_ai(
+                patient_data_summary, patient_ref
+            )
+        except AgentError:
+            logger.warning(
+                "[%s] AI generation failed, returning empty insights",
+                AGENT_NAME,
+            )
+            return []
+
+    async def _generate_with_ai(
+        self, patient_data_summary: str, patient_ref: str
+    ) -> list[dict[str, Any]]:
+        """Call Mistral API for insight generation."""
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {

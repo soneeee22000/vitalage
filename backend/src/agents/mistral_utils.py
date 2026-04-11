@@ -34,35 +34,57 @@ async def safe_chat_complete(
     temperature: float = 0.3,
     timeout_seconds: float = 30.0,
     agent_name: str = "unknown",
+    max_retries: int = 3,
 ) -> str:
-    """Call Mistral chat API with timeout and error handling."""
-    try:
-        response = await asyncio.wait_for(
-            client.chat.complete_async(
-                model=model,
-                messages=messages,  # type: ignore[arg-type]
-                response_format=response_format,
-                temperature=temperature,
-            ),
-            timeout=timeout_seconds,
-        )
-    except TimeoutError as exc:
-        logger.error(
-            "[%s] Mistral API timed out after %ss", agent_name, timeout_seconds
-        )
-        raise AgentTimeoutError(agent_name) from exc
-    except Exception as exc:
-        logger.error("[%s] Mistral API error: %s", agent_name, exc)
-        raise AgentError(agent_name, f"API call failed: {exc}") from exc
+    """Call Mistral chat API with timeout, retry on 429, and error handling."""
+    last_exc: Exception | None = None
 
-    if not response.choices:
-        raise AgentError(agent_name, "Empty choices in Mistral response")
+    for attempt in range(max_retries):
+        try:
+            response = await asyncio.wait_for(
+                client.chat.complete_async(
+                    model=model,
+                    messages=messages,  # type: ignore[arg-type]
+                    response_format=response_format,
+                    temperature=temperature,
+                ),
+                timeout=timeout_seconds,
+            )
+        except TimeoutError as exc:
+            logger.error(
+                "[%s] Mistral API timed out after %ss",
+                agent_name,
+                timeout_seconds,
+            )
+            raise AgentTimeoutError(agent_name) from exc
+        except Exception as exc:
+            last_exc = exc
+            if "429" in str(exc) and attempt < max_retries - 1:
+                wait = 2 ** attempt + 1
+                logger.warning(
+                    "[%s] Rate limited (429), retrying in %ss (attempt %d/%d)",
+                    agent_name,
+                    wait,
+                    attempt + 1,
+                    max_retries,
+                )
+                await asyncio.sleep(wait)
+                continue
+            logger.error("[%s] Mistral API error: %s", agent_name, exc)
+            raise AgentError(agent_name, f"API call failed: {exc}") from exc
+        else:
+            if not response.choices:
+                raise AgentError(agent_name, "Empty choices in Mistral response")
 
-    content = response.choices[0].message.content
-    if content is None:
-        raise AgentError(agent_name, "Null content in Mistral response")
+            content = response.choices[0].message.content
+            if content is None:
+                raise AgentError(agent_name, "Null content in Mistral response")
 
-    return str(content)
+            return str(content)
+
+    raise AgentError(
+        agent_name, f"API call failed after {max_retries} retries: {last_exc}"
+    )
 
 
 def safe_json_parse(raw: str, *, agent_name: str) -> dict[str, Any]:

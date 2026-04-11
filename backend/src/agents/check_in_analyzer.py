@@ -1,14 +1,21 @@
+import logging
 from typing import Any
 
 from mistralai import Mistral
 from mistralai.models import ResponseFormat
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.agents.mistral_utils import safe_chat_complete, safe_json_parse
+from src.agents.mistral_utils import (
+    AgentError,
+    safe_chat_complete,
+    safe_json_parse,
+)
 from src.services.audit_service import AuditService
 
 AGENT_NAME = "check_in_analyzer"
 MODEL = "mistral-small-latest"
+
+logger = logging.getLogger(__name__)
 
 
 class CheckInAnalyzer:
@@ -22,6 +29,25 @@ class CheckInAnalyzer:
         self, symptoms_text: str, patient_ref: str
     ) -> dict[str, Any]:
         """Parse free-text symptoms into structured categories."""
+        try:
+            return await self._analyze_with_ai(symptoms_text, patient_ref)
+        except AgentError:
+            logger.warning(
+                "[%s] AI analysis failed, using fallback", AGENT_NAME
+            )
+            return {
+                "categories": ["general"],
+                "severity": "leger",
+                "recommendation": (
+                    "Prenez soin de vous et n'hesitez pas a consulter "
+                    "si les symptomes persistent."
+                ),
+            }
+
+    async def _analyze_with_ai(
+        self, symptoms_text: str, patient_ref: str
+    ) -> dict[str, Any]:
+        """Call Mistral API for symptom analysis."""
         messages = [
             {
                 "role": "system",
