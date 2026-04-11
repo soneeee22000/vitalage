@@ -12,7 +12,9 @@
 
 VitalAge is a daily vitality companion for smart aging. 60-second morning check-ins build into a personal health equation — a Vitality Score that tracks nutrition, sleep, activity, and mood over time. Built for the **Nestle Vital VivaTech 2026** challenge on Smart Aging.
 
-**[Live Demo](https://vitalage-102991984200.europe-west1.run.app)** | **[API Docs](https://vitalage-102991984200.europe-west1.run.app/docs)**
+**[Live Demo](https://vitalage-102991984200.europe-west1.run.app/bienvenue)** | **[API Docs](https://vitalage-102991984200.europe-west1.run.app/docs)**
+
+> Demo account: `marie.dupont@demo.vitalage.health` / `vitalage2026` — 30 days of seeded health data
 
 ---
 
@@ -41,7 +43,7 @@ VitalAge closes the feedback loop with 5 integrated features:
 ```mermaid
 graph TB
     subgraph Frontend["Frontend (React 19 PWA)"]
-        UI[5 Screens: Bilan / Repas / Vitalite / Habitudes / Insights]
+        UI[Landing / Bilan / Repas / Vitalite / Habitudes / Insights]
         Auth[Auth Context + JWT]
         Hook[useAsyncData Hook]
     end
@@ -276,7 +278,7 @@ vitalage/
     src/
       components/      # UI components (Button, Card, Nav...)
       lib/             # API client, auth, hooks
-      pages/           # 7 pages (CheckIn, Vitality, Habits...)
+      pages/           # 8 pages (Landing, CheckIn, Vitality, Habits...)
       test/            # 30 vitest tests
   docs/
     PRD.md             # Product requirements
@@ -286,7 +288,9 @@ vitalage/
 
 ## About
 
-Built by **Pyae Sone Kyaw (Seon)** for the Nestle Vital VivaTech 2026 challenge.
+A product of **[Ekkhara](https://github.com/soneeee22000)** — AI Venture Studio.
+
+Built by **Pyae Sone (Seon)** for the Nestle Vital VivaTech 2026 challenge.
 
 - Full-Stack AI Engineer based in Paris
 - Dual Master's: Telecom SudParis + Asian Institute of Technology
